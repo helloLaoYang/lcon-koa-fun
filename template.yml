@@ -1,0 +1,48 @@
+ROSTemplateFormatVersion: '2015-09-01'
+Transform: 'Aliyun::Serverless-2018-04-03'
+Resources:
+  aliyun-fc: # service name
+    Type: 'Aliyun::Serverless::Service'
+    Properties:
+      Description: ''
+    express: # function name
+      Type: 'Aliyun::Serverless::Function'
+      Properties:
+        Handler: index.handler
+        Runtime: nodejs12
+        CodeUri: './dist'
+        Timeout: 6
+        InstanceConcurrency: 20
+      Events:
+        httpTrigger:
+          Type: HTTP
+          Properties:
+            AuthType: ANONYMOUS
+            Methods: ['GET', 'POST', 'HEAD', 'DELETE', 'PUT', 'OPTIONS']
+  # 自定义域名
+  custom.domain.com:
+    Type: 'Aliyun::Serverless::CustomDomain'
+    Properties:
+      Protocol: HTTP
+      # Protocol: HTTP,HTTPS
+      # CertConfig:
+        #  CertName: 'CertName'
+        #  PrivateKey: './certificates/privateKey.pem'
+        #  Certificate: './certificates/certificate.pem'
+      RouteConfig:
+        Routes:
+          '/*':
+            ServiceName: aliyun-fc
+            FunctionName: express
+         
+  # expressGroup:
+  #   Type: 'Aliyun::Serverless::Api'
+  #   Properties:
+  #     StageName: RELEASE
+  #     DefinitionBody:
+  #       '/':
+  #         get:
+  #           x-aliyun-apigateway-api-name: expressApi
+  #           x-aliyun-apigateway-fc:
+  #             arn: acs:fc:::services/${ demo-service.Arn}/functions/${ demo.Arn}/
+  #             timeout: 10000
